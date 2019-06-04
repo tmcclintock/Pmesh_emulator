@@ -31,10 +31,10 @@ class _pmesh_emulator(object):
 
     def __init__(self, parameters, redshifts, k, power_spectra,
                  number_of_principle_components=6, kernel=None):
-        parameters = np.array(parameters)
-        redshifts = np.array(redshifts)
-        k = np.array(k)
-        power_spectra = np.array(power_spectra)
+        parameters = np.asarray(parameters)
+        redshifts = np.asarray(redshifts)
+        k = np.asarray(k)
+        power_spectra = np.asarray(power_spectra)
 
         if parameters.ndim != 2:
             raise Exception("Parameters must be 2D array.")
@@ -75,18 +75,22 @@ class _pmesh_emulator(object):
         k2p = copy.deepcopy(p)
         Nk = len(k)
         Nz = len(zs)
+
         #Multiply each P(k) by k^2, but note the shapes
         #of the power spectra array we have to deal with
         for i in range(Nz):
             lo = i*Nk
             hi = (i+1)*Nk
             k2p[:, lo:hi] *= k**2
+
         #Take the log -- this reduces the dynamic range
         lnk2p = np.log(k2p)
+        
         #Remove the mean and make it unit variance in each k bin
         lnk2p_mean = np.mean(lnk2p)
         lnk2p_std = np.std(lnk2p, 0)
         lnk2p = (lnk2p - lnk2p_mean)/lnk2p_std
+
         #Save what we have now
         self.lnk2p = lnk2p
         self.lnk2p_mean = lnk2p_mean
@@ -186,5 +190,31 @@ class _pmesh_emulator(object):
         return P_pred
 
 class pmesh_emulator(object):
-    def __init__(self):
-        pass
+    def __init__(self, number_of_principle_components=6):
+
+        self.number_of_principle_components = number_of_principle_components
+        self.params = np.loadtxt("training_points.txt")
+        self.sf = np.linspace(0.02, 1.0, 30) #30 Snapshots
+        self.zs = 1./self.sf - 1.
+        self.k = np.load("k.npy")
+        self.pkz = np.load("pkz_data_Nsim_x_NkNz.npy")
+
+        if np.any(self.pkz <= 0):
+            raise Exception("problem: negative or 0 P(k,z)")
+
+        if np.any(np.isnan(self.pkz)):
+            raise Exception("problem: nan value in P(k,z)")
+
+        if np.any(np.isinf(self.pkz)):
+            raise Exception("problem: inf value in P(k,z)")
+
+        self._emu = _pmesh_emulator(self.params, self.zs,
+                                    self.k, self.pkz,
+                                    number_of_principle_components)
+        self._emu.train()
+        
+    def predict(self, params):
+        return self._emu.predict(params)
+
+if __name__ == "__main__":
+    emu = pmesh_emulator()
