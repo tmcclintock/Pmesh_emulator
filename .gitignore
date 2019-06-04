@@ -3,7 +3,7 @@
 *.pdf
 
 # the data
-pmesh_test/*
+pmesh_emulator/pmesh_test/*
 
 # emacs backup files
 *~
