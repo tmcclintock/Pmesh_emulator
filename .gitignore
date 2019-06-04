@@ -1,3 +1,7 @@
+# figures
+*.png
+*.pdf
+
 # the data
 pmesh_test/*
 
