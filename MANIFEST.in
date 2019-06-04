@@ -1,0 +1,2 @@
+include pmesh_emulator/*.npy
+include pmesh_emulator/training_points.txt

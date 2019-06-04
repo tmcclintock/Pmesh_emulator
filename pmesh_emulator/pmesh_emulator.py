@@ -5,6 +5,7 @@ from george.kernels import ExpSquaredKernel, Matern52Kernel, \
     ExpKernel, RationalQuadraticKernel, Matern32Kernel
 import scipy.optimize as op
 
+
 #Assert statements to guarantee the linter doesn't complain
 assert ExpSquaredKernel
 assert Matern52Kernel
@@ -192,12 +193,15 @@ class _pmesh_emulator(object):
 class pmesh_emulator(object):
     def __init__(self, number_of_principle_components=6):
 
+        import os, inspect
+        data_path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))+"/"
+        
         self.number_of_principle_components = number_of_principle_components
-        self.params = np.loadtxt("training_points.txt")
+        self.params = np.loadtxt(data_path+"training_points.txt")
         self.sf = np.linspace(0.02, 1.0, 30) #30 Snapshots
         self.zs = 1./self.sf - 1.
-        self.k = np.load("k.npy")
-        self.pkz = np.load("pkz_data_Nsim_x_NkNz.npy")
+        self.k = np.load(data_path+"k.npy")
+        self.pkz = np.load(data_path+"pkz_data_Nsim_x_NkNz.npy")
 
         if np.any(self.pkz <= 0):
             raise Exception("problem: negative or 0 P(k,z)")
