@@ -191,8 +191,8 @@ class _pmesh_emulator(object):
         return P_pred
 
 class pmesh_emulator(object):
-    def __init__(self, number_of_principle_components=6):
-
+    def __init__(self, excluded_indices=None, number_of_principle_components=6):
+        
         import os, inspect
         data_path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))+"/"
         
@@ -202,7 +202,7 @@ class pmesh_emulator(object):
         self.zs = 1./self.sf - 1.
         self.k = np.load(data_path+"k.npy")
         self.pkz = np.load(data_path+"pkz_data_Nsim_x_NkNz.npy")
-
+        
         if np.any(self.pkz <= 0):
             raise Exception("problem: negative or 0 P(k,z)")
 
@@ -211,6 +211,14 @@ class pmesh_emulator(object):
 
         if np.any(np.isinf(self.pkz)):
             raise Exception("problem: inf value in P(k,z)")
+
+        if excluded_indices is not None:
+            inds = np.arange(len(self.params))
+            self.excluded_indices=excluded_indices
+            self.excluded_params = self.params[excluded_indices]
+            self.excluded_pkz = self.pkz[excluded_indices]
+            self.params = np.delete(self.params, excluded_indices, axis=0)
+            self.pkz = np.delete(self.pkz, excluded_indices, axis=0)
 
         self._emu = _pmesh_emulator(self.params, self.zs,
                                     self.k, self.pkz,
